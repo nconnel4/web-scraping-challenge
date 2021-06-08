@@ -15,11 +15,11 @@ def open_page(browser, url):
     browser.visit(url)
 
 
-def scrape_mars_data():
+def scrape():
     browser = create_browser()
     open_page(browser, 'https://redplanetscience.com')
 
 
 
 if __name__ == '__main__':
-    scrape_mars_data()
+    scrape()
