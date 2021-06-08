@@ -2,16 +2,18 @@ from splinter import Browser
 from bs4 import BeautifulSoup as Soup
 import pandas as pd
 from webdriver_manager.chrome import ChromeDriverManager
-import time
+import pymongo
 
 import logging
+
 logger = logging.getLogger()
 handler = logging.StreamHandler()
 formatter = logging.Formatter(
-        '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+
 
 class WebBrowser:
 
@@ -22,7 +24,7 @@ class WebBrowser:
     @staticmethod
     def create_browser():
         executable_path = {'executable_path': ChromeDriverManager().install()}
-        browser = Browser('chrome', **executable_path, headless=False)
+        browser = Browser('chrome', **executable_path, headless=True)
 
         return browser
 
@@ -33,6 +35,26 @@ class WebBrowser:
     def load_page_html(self):
         self.html = self.browser.html
         return self.html
+
+
+class MongoConnector:
+
+    def __init__(self):
+        self._conn = 'mongodb://localhost:27017'
+        self._client = pymongo.MongoClient(self._conn)
+        self._database = MongoConnector.database
+
+    @property
+    def database(self):
+        return self._database
+
+    @database.setter
+    def database(self, db_name):
+        logger.debug(db_name)
+        self._database = self._client[db_name]
+
+    def drop_collection(self, collection_name):
+        self._database[collection_name].drop()
 
 
 def scrape_mars_news(web_browser):
@@ -52,7 +74,6 @@ def scrape_mars_news(web_browser):
 
 
 def scrape_jpl_featured_image(web_browser):
-
     web_browser.open_page('https://spaceimages-mars.com/')
     html = web_browser.html
 
@@ -79,6 +100,36 @@ def scrape_mars_facts():
     return mars_df
 
 
+def scrape_mars_hemisphere_images(web_browser):
+    url = 'https://marshemispheres.com'
+    web_browser.open_page('https://marshemispheres.com')
+    html = web_browser.html
+    browser = web_browser.browser
+
+    links = browser.find_by_css('a.product-item img')
+
+    hemisphere_image_urls = []
+
+    for link in range(len(links)):
+        hemi_dict = {}
+        logger.info(link)
+
+        browser.find_by_css('a.product-item img')[link].click()
+        hemi_name = browser.find_by_css('h2').value
+        logger.info(hemi_name)
+
+        sample = browser.find_by_text('Sample')
+        logger.info(sample['href'])
+
+        hemi_dict['name'] = hemi_name
+        hemi_dict['img_url'] = sample['href']
+
+        hemisphere_image_urls.append(hemi_dict)
+
+        browser.back()
+
+    return hemisphere_image_urls
+
 
 def scrape():
     browser = WebBrowser()
@@ -86,7 +137,29 @@ def scrape():
     news_title, news_paragraph = scrape_mars_news(browser)
     jpl_featured_image_url = scrape_jpl_featured_image(browser)
     mars_facts = scrape_mars_facts()
+    hemisphere_images = scrape_mars_hemisphere_images(browser)
 
+    mongo_conn = MongoConnector()
+    mongo_conn.database = "mars_db"
+    db = mongo_conn.database
+
+    mongo_conn.drop_collection('headline')
+    db['headline'].insert_one(
+        {'headline': news_title,
+         'paragraph': news_paragraph}
+    )
+
+    mongo_conn.drop_collection('featured_image')
+    db['featured_image'].insert_one(
+        {'image_url': jpl_featured_image_url}
+    )
+
+    mongo_conn.drop_collection('mars_fact')
+    logger.debug(mars_facts.to_dict())
+    db['mars_facts'].insert_one(mars_facts.to_dict())
+
+    mongo_conn.drop_collection('hemisphere_images')
+    db['hemisphere_images'].insert_many(hemisphere_images)
 
 
 if __name__ == '__main__':
