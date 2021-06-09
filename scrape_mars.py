@@ -12,7 +12,7 @@ formatter = logging.Formatter(
     '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class WebBrowser:
@@ -50,7 +50,6 @@ class MongoConnector:
 
     @database.setter
     def database(self, db_name):
-        logger.debug(db_name)
         self._database = self._client[db_name]
 
     def drop_collection(self, collection_name):
@@ -154,9 +153,9 @@ def scrape():
         {'image_url': jpl_featured_image_url}
     )
 
-    mongo_conn.drop_collection('mars_fact')
+    mongo_conn.drop_collection('mars_facts')
     logger.debug(mars_facts.to_dict())
-    db['mars_facts'].insert_one(mars_facts.to_dict())
+    db['mars_facts'].insert_one(mars_facts.to_dict('index'))
 
     mongo_conn.drop_collection('hemisphere_images')
     db['hemisphere_images'].insert_many(hemisphere_images)
