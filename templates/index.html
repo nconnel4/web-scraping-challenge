@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Mars Data</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container-fluid text-center">
+        <div class="jumbotron">
+            <h1>Mission to Mars</h1>
+            <a class="btn btn-primary btn-lg" href="/scrape" role="button">
+                Scrape New Data
+            </a>
+        </div>
+    </div>
+    <div class=container>
+        <div class="header">
+            <h3 id="headline">Latest Mars News</h3>
+        </div>
+            <h6>{{ latest_news.headline }}</h6>
+            <p>{{ latest_news.paragraph }}</p>
+    </div>
+    <div class=container>
+        <div class="row">
+            <div class="col-lg-6">
+                <h3 id="featured_image">Featured Mars Image</h3>
+                <img src= {{ featured_image.image_url }} alt="JPL Space Lab Featured Image" width="100%"/>
+            </div>
+            <div class="ml-auto">
+                <h4>Mars Facts</h4>
+                <table class="table table-striped table-bordered border">
+                    <tr>
+                        <td></td>
+                        <th>Mars</th>
+                        <th>Earth</th>
+                    </tr>
+                    <tr>
+                        <th>Description</th>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {% for k1, v1 in mars_facts.items() %}
+                    <tr>
+                        <th>{{ k1 }}</th>
+                        {% for k2, v2 in v1.items() %}
+                            <td>{{ v2 }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        <div class="container">
+            <h3 align="center">Mars Hemispheres</h3>
+            <hr/>
+            <div class="row">
+            {% for image in hemisphere_images %}
+                <div class="col px-md-5">
+                    <img src = {{ image.img_url }} alt= {{ image.name }} width=100%>
+                    <h8><strong>{{ image.name }}</strong></h8>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
